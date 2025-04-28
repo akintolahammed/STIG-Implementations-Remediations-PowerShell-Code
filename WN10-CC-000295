@@ -1,0 +1,22 @@
+# Ensure the script is running with Administrator privileges
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "Please run this script as Administrator!" -ForegroundColor Red
+    Exit
+}
+
+# Define registry path and value
+$registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Feeds"
+$valueName = "DisableEnclosureDownload"
+$value = 1
+
+# Check if the registry path exists
+if (-not (Test-Path $registryPath)) {
+    Write-Host "Creating registry path: $registryPath" -ForegroundColor Yellow
+    New-Item -Path $registryPath -Force
+}
+
+# Set the registry value
+Write-Host "Setting registry value for '$valueName' to $value..." -ForegroundColor Yellow
+Set-ItemProperty -Path $registryPath -Name $valueName -Value $value -Type DWord
+
+Write-Host "Registry value successfully applied!" -ForegroundColor Green
