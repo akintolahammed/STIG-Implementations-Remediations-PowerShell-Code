@@ -1,0 +1,37 @@
+# Define the registry path and value name
+$registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\MicrosoftEdge\PhishingFilter"
+$valueName = "PreventOverrideAppRepUnknown"
+$desiredValue = 1  # The value you want to set (1)
+
+# Function to check if the system is Windows 10
+function Is-Windows10 {
+    $osName = (Get-WmiObject -Class Win32_OperatingSystem).Caption
+    if ($osName -match "Windows 10") {
+        return $true
+    }
+    return $false
+}
+
+# Function to apply the registry value
+function Apply-RegistrySetting {
+    # Check if the registry path exists
+    if (-Not (Test-Path $registryPath)) {
+        Write-Host "Registry path does not exist. Creating path..."
+        New-Item -Path $registryPath -Force
+    }
+
+    # Set the registry value to 1
+    Write-Host "Setting registry value to 1..."
+    Set-ItemProperty -Path $registryPath -Name $valueName -Value $desiredValue
+    Write-Host "Registry value set successfully."
+}
+
+# Check if the system is Windows 10
+if (Is-Windows10) {
+    Write-Host "This is a Windows 10 system. Continuing with the registry check..."
+
+    # Apply the registry setting to ensure it's set to 1
+    Apply-RegistrySetting
+} else {
+    Write-Host "This is not a Windows 10 system. The policy does not apply."
+}
