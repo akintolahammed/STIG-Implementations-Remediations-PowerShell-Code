@@ -1,0 +1,37 @@
+# Define the registry path and value name
+$registryPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa"
+$valueName = "SCENoApplyLegacyAuditPolicy"
+$desiredValue = 1  # Set the value to 1 as per policy
+
+# Function to check if the system is Windows 10
+function Is-Windows10 {
+    $osName = (Get-WmiObject -Class Win32_OperatingSystem).Caption
+    if ($osName -match "Windows 10") {
+        return $true
+    }
+    return $false
+}
+
+# Function to apply the registry setting
+function Apply-RegistrySetting {
+    # Check if the registry path exists
+    if (-Not (Test-Path $registryPath)) {
+        Write-Host "Registry path does not exist. Creating path..."
+        New-Item -Path $registryPath -Force
+    }
+
+    # Set the registry value to 1
+    Write-Host "Setting $valueName to $desiredValue..."
+    Set-ItemProperty -Path $registryPath -Name $valueName -Value $desiredValue
+    Write-Host "Registry value set successfully."
+}
+
+# Main execution block
+if (Is-Windows10) {
+    Write-Host "This is a Windows 10 system. Applying the registry configuration..."
+
+    # Apply the registry setting
+    Apply-RegistrySetting
+} else {
+    Write-Host "This is not a Windows 10 system. The policy does not apply."
+}
