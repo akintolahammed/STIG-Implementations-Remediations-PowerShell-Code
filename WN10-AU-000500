@@ -1,0 +1,23 @@
+# Ensure the script is running with Administrator privileges
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "Please run this script as Administrator!" -ForegroundColor Red
+    Exit
+}
+
+# Define the Registry Hive and Path
+$regPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\EventLog\Application"
+$regName = "MaxSize"
+$regValue = 32768  # 0x00008000 in decimal
+
+# Check if the Registry Path exists
+if (-not (Test-Path $regPath)) {
+    Write-Host "Registry path does not exist. Creating it..." -ForegroundColor Yellow
+    # Create the path if it doesn't exist
+    New-Item -Path $regPath -Force | Out-Null
+}
+
+# Set the Registry value for MaxSize
+Write-Host "Setting 'MaxSize' value to $regValue..." -ForegroundColor Yellow
+Set-ItemProperty -Path $regPath -Name $regName -Value $regValue -Type DWord
+
+Write-Host "'MaxSize' value has been successfully set to $regValue (0x00008000)." -ForegroundColor Green
