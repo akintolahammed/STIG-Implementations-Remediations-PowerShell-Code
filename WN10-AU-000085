@@ -1,0 +1,39 @@
+# Ensure the script is running with Administrator privileges
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "Please run this script as Administrator!" -ForegroundColor Red
+    Exit
+}
+
+# 1️⃣ Check the current audit policy for Removable Storage (Failure)
+Write-Host "Checking current audit policy for 'Object Access >> Removable Storage - Failure'..."
+
+# Get the current audit policy for "Removable Storage" under "Object Access"
+$currentAuditPolicy = AuditPol /get /category:"Object Access" | Select-String "Removable Storage"
+
+if ($currentAuditPolicy) {
+    # Extract the current setting for 'Removable Storage'
+    $currentSetting = $currentAuditPolicy.Line -split '\s+' | Select-Object -Last 1
+
+    Write-Host "Current audit policy for 'Removable Storage': $currentSetting"
+
+    # 2️⃣ Check if the policy is correctly configured for Failure audit
+    if ($currentSetting -notmatch "Failure") {
+        Write-Host "The 'Removable Storage - Failure' audit policy is not correctly configured. Configuring it now..." -ForegroundColor Yellow
+        
+        # Set the audit policy for Removable Storage to 'Failure'
+        AuditPol /set /subcategory:"Removable Storage" /failure:enable
+        
+        Write-Host "Audit policy for 'Removable Storage - Failure' has been configured successfully." -ForegroundColor Green
+    } else {
+        Write-Host "The 'Removable Storage - Failure' audit policy is already correctly configured." -ForegroundColor Green
+    }
+} else {
+    Write-Host "Removable Storage policy not found. Ensuring it's enabled..." -ForegroundColor Yellow
+    # Set the audit policy for Removable Storage to 'Failure'
+    AuditPol /set /subcategory:"Removable Storage" /failure:enable
+    Write-Host "Audit policy for 'Removable Storage - Failure' has been configured successfully." -ForegroundColor Green
+}
+
+# 3️⃣ Optional: If using virtual machines and generating excessive audit events, 
+# document this with the ISSO and consider the mitigations like monitoring or restricting removable storage.
+Write-Host "If you are using virtual machines, ensure this setting is documented with the ISSO to include necessary mitigations."
