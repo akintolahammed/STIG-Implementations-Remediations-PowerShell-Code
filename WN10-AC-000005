@@ -1,0 +1,31 @@
+# Ensure the script runs with administrative privileges
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "Please run this script as an Administrator." -ForegroundColor Red
+    Exit
+}
+
+# Get the current lockout duration
+$currentDuration = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters")."MaximumPasswordAge"
+
+# Convert to minutes
+$lockoutDuration = (Get-ADDefaultDomainPasswordPolicy).LockoutDuration.TotalMinutes
+
+Write-Host "Current Lockout Duration: $lockoutDuration minutes" -ForegroundColor Cyan
+
+# Check compliance
+if ($lockoutDuration -lt 15 -and $lockoutDuration -ne 0) {
+    Write-Host "Non-compliant: Lockout duration is less than 15 minutes." -ForegroundColor Yellow
+    Write-Host "Enforcing a compliant value of 15 minutes..." -ForegroundColor Green
+    
+    # Set the lockout duration to 15 minutes
+    net accounts /lockoutduration:15
+
+    # Verify the change
+    $newDuration = (Get-ADDefaultDomainPasswordPolicy).LockoutDuration.TotalMinutes
+    Write-Host "Updated Lockout Duration: $newDuration minutes" -ForegroundColor Green
+
+} elseif ($lockoutDuration -eq 0) {
+    Write-Host "Compliant: Lockout duration is 0 (requires admin unlock)." -ForegroundColor Green
+} else {
+    Write-Host "Compliant: Lockout duration is $lockoutDuration minutes." -ForegroundColor Green
+}
