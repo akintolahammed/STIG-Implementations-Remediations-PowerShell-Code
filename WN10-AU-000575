@@ -1,0 +1,17 @@
+# Ensure the script is running with Administrator privileges
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "Please run this script as Administrator!" -ForegroundColor Red
+    Exit
+}
+
+# 1️⃣ Enable "Force audit policy subcategory settings"
+Write-Host "Enabling 'Force audit policy subcategory settings'..."
+Start-Process -FilePath "auditpol.exe" -ArgumentList '/set', '/option:SCENoApplyLegacyAuditPolicy', '/value:1' -Wait -NoNewWindow
+
+# 2️⃣ Configure "MPSSVC Rule-Level Policy Change" for Success
+Write-Host "Configuring 'MPSSVC Rule-Level Policy Change' for Success..."
+
+# Use double quotes for the subcategory parameter correctly
+Start-Process -FilePath "auditpol.exe" -ArgumentList "/set /subcategory:`"MPSSVC Rule-Level Policy Change`" /success:enable" -Wait -NoNewWindow
+
+Write-Host "Audit policy successfully applied!" -ForegroundColor Green
